@@ -152,9 +152,9 @@ func WithFiles(files map[string]string) TReqOption {
 	return func(o *ReqOptions) { o.files = files }
 }
 
-func WithCache(cache ICacheFn, period time.Duration, token string) TReqOption {
+func WithCache(cache ICacheFn, period time.Duration, idempotency string) TReqOption {
 	return func(o *ReqOptions) {
-		o.cacheObj = &cacheObj{fncs: cache, expiry: period, idempotency: token}
+		o.cacheObj = &cacheObj{fncs: cache, expiry: period, idempotency: idempotency}
 	}
 }
 

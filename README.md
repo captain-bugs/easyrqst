@@ -9,6 +9,7 @@ A simple and efficient HTTP request library for Go.
 - Custom header support
 - Request timeout configuration
 - Error handling simplified
+- Cache Requests
 
 ## Installation
 

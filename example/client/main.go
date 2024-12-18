@@ -2,18 +2,54 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/captain-bugs/easyrqst"
+	"github.com/patrickmn/go-cache"
 	"log"
 	"time"
 )
 
+type ILocalCache interface {
+	Get(key string) (any, error)
+	Set(key string, value any, expiry time.Duration) (any, error)
+	Delete(key string) error
+}
+
+type LocalCache struct {
+	cache *cache.Cache
+}
+
+func NewLocalCache() ILocalCache {
+	return &LocalCache{cache.New(5*time.Minute, 10*time.Minute)}
+}
+
+func (l *LocalCache) Get(key string) (any, error) {
+	data, found := l.cache.Get(key)
+	if !found {
+		return nil, errors.New("key not found")
+	}
+	return data, nil
+}
+
+func (l *LocalCache) Set(key string, value any, expiry time.Duration) (any, error) {
+	l.cache.Set(key, value, expiry)
+	return nil, nil
+}
+
+func (l *LocalCache) Delete(key string) error {
+	l.cache.Delete(key)
+	return nil
+}
+
 func GET_Json() {
 	log.Println("GET_Json")
+	cache := NewLocalCache()
+
 	const endpoint = "http://localhost:9000/json"
 	call := easyrqst.NewHttpClient(endpoint, easyrqst.WithRetry(4), easyrqst.WithRetryWaitMax(time.Millisecond*100))
 	headers := easyrqst.WithHeaders(map[string]string{"Content-Type": "application/json"})
-
-	outcome, err := call.Get(headers)
+	caching := easyrqst.WithCache(cache, time.Minute*5, "json")
+	outcome, err := call.Get(headers, caching)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -24,6 +60,8 @@ func GET_Json() {
 	if err := json.Unmarshal(outcome.Body, &data); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
+	x, _ := cache.Get(outcome.CacheKey())
+	log.Println("cached value", x)
 	log.Println(data)
 }
 
