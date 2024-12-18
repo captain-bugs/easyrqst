@@ -6,7 +6,6 @@ A simple and efficient HTTP request library for Go.
 
 - Easy-to-use HTTP client wrapper
 - Support for common HTTP methods (GET, POST, PUT, DELETE, etc.)
-- Chainable request building
 - Custom header support
 - Request timeout configuration
 - Error handling simplified
