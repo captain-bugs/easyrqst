@@ -11,6 +11,7 @@ const endpoint = "http://localhost:9000"
 var (
 	generalPayload   = map[string]any{"name": "morpheus", "age": 30, "email": "example@example.com"}
 	multipartPayload = map[string]string{"name": "morpheus", "age": "30", "email": "example@example.com"}
+	complexPayload   = map[string]interface{}{"person": map[string]interface{}{"name": "John Doe", "age": "30", "address": map[string]interface{}{"city": "New York", "state": "NY"}}}
 )
 
 func TestGetJsonRoute(t *testing.T) {
@@ -82,7 +83,7 @@ func TestGetXmlRoute(t *testing.T) {
 func TestPostXmlRoute(t *testing.T) {
 	call := NewHttpClient(fmt.Sprintf("%s/xml", endpoint), WithRetry(4), WithRetryWaitMax(time.Millisecond*100))
 
-	body := WithPayload(multipartPayload)
+	body := WithPayload(complexPayload)
 	headers := WithHeaders(map[string]string{"Content-Type": "application/xml"})
 
 	outcome, err := call.Post(body, headers)

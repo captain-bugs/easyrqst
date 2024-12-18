@@ -16,6 +16,17 @@ type TestData struct {
 	Email string `json:"email"   xml:"email"`
 }
 
+type Person struct {
+	Name    string  `xml:"name"`
+	Age     string  `xml:"age"`
+	Address Address `xml:"address"`
+}
+
+type Address struct {
+	City  string `xml:"city"`
+	State string `xml:"state"`
+}
+
 // Helper function to validate headers
 func validateHeader(w http.ResponseWriter, r *http.Request, expectedHeader string) bool {
 	contentType := r.Header.Get("Content-Type")
@@ -64,7 +75,7 @@ func xmlHandler(w http.ResponseWriter, r *http.Request) {
 		response := "<response><status>GET request received for /xml</status></response>"
 		w.Write([]byte(response))
 	case http.MethodPost:
-		var data TestData
+		var data Person
 		if err := xml.NewDecoder(r.Body).Decode(&data); err != nil {
 			http.Error(w, "Invalid XML", http.StatusBadRequest)
 			return

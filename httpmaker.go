@@ -15,9 +15,11 @@ import (
 	"time"
 )
 
-type XMLMapEntry struct {
-	XMLName xml.Name
-	Value   string `xml:",chardata"`
+type XMLElement struct {
+	XMLName  xml.Name
+	Attr     []xml.Attr
+	Content  string       `xml:",chardata"`
+	Children []XMLElement `xml:",any"`
 }
 
 type ICacheFn interface {
@@ -104,23 +106,27 @@ func handleMultipartFormData(payload map[string]string, files map[string]string)
 	return &b, writer.FormDataContentType(), nil
 }
 
-func handleXMLData(data map[string]string) ([]byte, error) {
-	var entries []XMLMapEntry
-
+func convertToXMLElements(data map[string]interface{}) []XMLElement {
+	var elements []XMLElement
 	for key, value := range data {
-		strValue := fmt.Sprintf("%v", value)
-		entries = append(entries, XMLMapEntry{
+		element := XMLElement{
 			XMLName: xml.Name{Local: key},
-			Value:   strValue,
-		})
+		}
+		switch v := value.(type) {
+		case string:
+			element.Content = v
+		case map[string]interface{}:
+			element.Children = convertToXMLElements(v)
+		default:
+			element.Content = fmt.Sprintf("%v", v)
+		}
+		elements = append(elements, element)
 	}
+	return elements
+}
 
-	root := struct {
-		XMLName xml.Name      `xml:"Root"`
-		Entries []XMLMapEntry `xml:",any"`
-	}{Entries: entries}
-
-	return xml.MarshalIndent(root, "", "  ")
+func handleXMLData(data map[string]interface{}) ([]byte, error) {
+	return xml.MarshalIndent(convertToXMLElements(data), "", "  ")
 }
 
 func toStruct[M any, S any](m M) S {
@@ -235,10 +241,10 @@ func (h *easyRequest) prepareRequest(method, endpoint string, opts ...TReqOption
 			options.headers["Content-Type"] = contentType
 
 		case "application/xml":
-			if _, ok := options.payload.(map[string]string); !ok {
-				return nil, fmt.Errorf("payload should be a map[string]string for application/xml")
+			if _, ok := options.payload.(map[string]interface{}); !ok {
+				return nil, fmt.Errorf("payload should be a map[string]interface{} for application/xml")
 			}
-			byts, err := handleXMLData(options.payload.(map[string]string))
+			byts, err := handleXMLData(options.payload.(map[string]interface{}))
 			if err != nil {
 				return nil, err
 			}
