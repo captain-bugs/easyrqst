@@ -15,11 +15,11 @@ import (
 	"time"
 )
 
-type XMLElement struct {
+type xmlElement struct {
 	XMLName  xml.Name
 	Attr     []xml.Attr
 	Content  string       `xml:",chardata"`
-	Children []XMLElement `xml:",any"`
+	Children []xmlElement `xml:",any"`
 }
 
 type ICacheFn interface {
@@ -106,10 +106,10 @@ func handleMultipartFormData(payload map[string]string, files map[string]string)
 	return &b, writer.FormDataContentType(), nil
 }
 
-func convertToXMLElements(data map[string]interface{}) []XMLElement {
-	var elements []XMLElement
+func convertToXMLElements(data map[string]interface{}) []xmlElement {
+	var elements []xmlElement
 	for key, value := range data {
-		element := XMLElement{
+		element := xmlElement{
 			XMLName: xml.Name{Local: key},
 		}
 		switch v := value.(type) {
