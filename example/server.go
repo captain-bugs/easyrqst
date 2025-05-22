@@ -46,7 +46,9 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"status": "GET request received for /json"}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	case http.MethodPost:
 		var data TestData
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -58,7 +60,9 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 			"status": "success",
 			"data":   fmt.Sprintf("Received JSON: %+v", data),
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -73,7 +77,9 @@ func xmlHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "application/xml")
 		response := "<response><status>GET request received for /xml</status></response>"
-		w.Write([]byte(response))
+		if _, err := w.Write([]byte(response)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	case http.MethodPost:
 		var data Person
 		if err := xml.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -82,7 +88,9 @@ func xmlHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/xml")
 		response := fmt.Sprintf("<response><status>success</status><data>Received XML: %+v</data></response>", data)
-		w.Write([]byte(response))
+		if _, err := w.Write([]byte(response)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -96,7 +104,9 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("GET request received for /form"))
+		if _, err := w.Write([]byte("GET request received for /form")); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "Invalid form data", http.StatusBadRequest)
@@ -107,7 +117,9 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		response := fmt.Sprintf("Received Form Data: name=%s, age=%s, email=%s", name, age, email)
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(response))
+		if _, err := w.Write([]byte(response)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -121,7 +133,9 @@ func multipartHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("GET request received for /multipart"))
+		if _, err := w.Write([]byte("GET request received for /multipart")); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	case http.MethodPost:
 		if err := r.ParseMultipartForm(10 << 20); err != nil { // Limit max upload size to 10MB
 			http.Error(w, "Invalid multipart form data", http.StatusBadRequest)
@@ -141,7 +155,10 @@ func multipartHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			defer dst.Close()
-			io.Copy(dst, file)
+			if _, err := io.Copy(dst, file); err != nil {
+				http.Error(w, "Failed to copy file", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		response := fmt.Sprintf("Received Multipart Data: name=%s, age=%s, email=%s", name, age, email)
@@ -149,7 +166,9 @@ func multipartHandler(w http.ResponseWriter, r *http.Request) {
 			response += fmt.Sprintf(", file=%s", handler.Filename)
 		}
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(response))
+		if _, err := w.Write([]byte(response)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
